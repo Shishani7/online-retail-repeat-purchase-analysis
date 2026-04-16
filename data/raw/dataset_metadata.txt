@@ -1,0 +1,13 @@
+Name: Online Retail
+Rows: 541909
+Columns: 6
+Abstract: This is a transactional data set which contains all the transactions occurring between 01/12/2010 and 09/12/2011 for a UK-based and registered non-store online retail.
+Variables:
+- InvoiceNo: ID / Categorical / a 6-digit integral number uniquely assigned to each transaction. If this code starts with letter 'c', it indicates a cancellation
+- StockCode: ID / Categorical / a 5-digit integral number uniquely assigned to each distinct product
+- Description: Feature / Categorical / product name
+- Quantity: Feature / Integer / the quantities of each product (item) per transaction
+- InvoiceDate: Feature / Date / the day and time when each transaction was generated
+- UnitPrice: Feature / Continuous / product price per unit
+- CustomerID: Feature / Categorical / a 5-digit integral number uniquely assigned to each customer
+- Country: Feature / Categorical / the name of the country where each customer resides

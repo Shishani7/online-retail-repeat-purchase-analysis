@@ -1,0 +1,48 @@
+Признак,Важность
+num__frequency_orders,0.1428243045375759
+num__active_months,0.13990921048884997
+num__total_units,0.1397479551583436
+num__monetary_total,0.1331683496703072
+num__recency_days,0.08755656542419243
+num__unique_products,0.07580643700690841
+num__avg_days_between_orders,0.06836095506252252
+num__max_order_value,0.06512543925692847
+num__avg_order_value,0.05147620567558605
+num__avg_items_per_order,0.04825901098198588
+num__customer_tenure_days,0.03892084479157897
+cat__country_United Kingdom,0.0028032830373820213
+cat__country_Germany,0.0012919782049205502
+cat__country_France,0.0011786415671846764
+cat__country_Spain,0.0007288375967398618
+cat__country_Italy,0.00044163618099476683
+cat__country_Belgium,0.0003510262082120279
+cat__country_Portugal,0.00034057410887884513
+cat__country_Japan,0.0003305112902186867
+cat__country_Switzerland,0.0002863876003674091
+cat__country_Australia,0.0001799979443950028
+cat__country_Austria,0.00012403721664617788
+cat__country_Channel Islands,9.869001241655946e-05
+cat__country_Netherlands,9.504111440072038e-05
+cat__country_Denmark,8.911664890371923e-05
+cat__country_Poland,7.622384493272836e-05
+cat__country_EIRE,6.594403384516792e-05
+cat__country_Sweden,5.828811475375044e-05
+cat__country_Finland,5.654464017720123e-05
+cat__country_Cyprus,5.470717237224639e-05
+cat__country_Unspecified,4.5046623706543364e-05
+cat__country_Greece,4.334081177376487e-05
+cat__country_Bahrain,3.731101248585647e-05
+cat__country_Canada,3.597001396395213e-05
+cat__country_Norway,3.1586945548492435e-05
+cat__country_Brazil,0.0
+cat__country_Israel,0.0
+cat__country_Czech Republic,0.0
+cat__country_European Community,0.0
+cat__country_Iceland,0.0
+cat__country_Lebanon,0.0
+cat__country_Lithuania,0.0
+cat__country_Malta,0.0
+cat__country_Saudi Arabia,0.0
+cat__country_Singapore,0.0
+cat__country_United Arab Emirates,0.0
+cat__country_USA,0.0

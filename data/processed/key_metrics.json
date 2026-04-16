@@ -1,0 +1,10 @@
+{
+  "raw_rows": 541909,
+  "clean_rows": 392692,
+  "customers": 4338,
+  "orders": 18532,
+  "revenue": 8887208.89,
+  "avg_order_value": 479.56,
+  "median_order_value": 302.57,
+  "best_model": "Random Forest"
+}

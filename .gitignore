@@ -1,0 +1,14 @@
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.ipynb_checkpoints/
+.pytest_cache/
+.mypy_cache/
+.DS_Store
+Thumbs.db
+
+# большие файлы данных — скачиваются отдельно
+data/raw/online_retail.csv
+data/processed/clean_transactions.csv
