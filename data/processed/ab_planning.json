@@ -1,0 +1,24 @@
+{
+  "historical_baseline": {
+    "type": "observational_baseline",
+    "not_a_treatment_effect": true,
+    "segment": "В зоне риска",
+    "cutoff": "2011-11-01T00:00:00",
+    "outcome_end": "2011-12-01T00:00:00",
+    "horizon_days": 30,
+    "eligible_customers": 620,
+    "repeat_buyers": 158,
+    "repeat_rate": 0.25483870967741934
+  },
+  "sample_size": {
+    "baseline": 0.25483870967741934,
+    "alternative": 0.27483870967741936,
+    "absolute_mde": 0.02,
+    "relative_mde": 0.07848101265822785,
+    "alpha": 0.05,
+    "power": 0.8,
+    "per_group": 7640,
+    "total": 15280,
+    "method": "Two-sided normal approximation, independent clients, 1:1 allocation"
+  }
+}

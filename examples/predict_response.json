@@ -1,0 +1,8 @@
+{
+  "score": 0.3439529220177237,
+  "prediction": 0,
+  "threshold": 0.5,
+  "horizon_days": 90,
+  "model_name": "Random Forest",
+  "model_version": "e391880aed30"
+}
