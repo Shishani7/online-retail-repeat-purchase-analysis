@@ -1,3 +1,4 @@
+import hashlib
 import json
 import sys
 from pathlib import Path
@@ -27,7 +28,8 @@ from retail_repeat_analysis import (
     plot_rfm_segments,
     plot_top_countries,
 )
-
+from retail_repeat_analysis.experiments import historical_baseline, sample_size, synthetic_demo
+from retail_repeat_analysis.modeling import FEATURE_COLUMNS, persist_model
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 RAW_DATA_PATH = ROOT_DIR / "data" / "raw" / "online_retail.csv"
@@ -64,6 +66,25 @@ def main():
     retention.to_csv(PROCESSED_DIR / "cohort_retention.csv")
     ml_artifacts["snapshot_df"].to_csv(PROCESSED_DIR / "ml_snapshot_dataset.csv", index=False)
     ml_artifacts["metrics_df"].to_csv(PROCESSED_DIR / "model_metrics.csv", index=False)
+    ml_artifacts["validation_metrics_df"].to_csv(PROCESSED_DIR / "validation_metrics.csv", index=False)
+    (PROCESSED_DIR / "temporal_validation.json").write_text(
+        json.dumps(ml_artifacts["validation_report"], ensure_ascii=False, indent=2), encoding="utf-8"
+    )
+    metadata = persist_model(ml_artifacts, ROOT_DIR / "models",
+                             hashlib.sha256(RAW_DATA_PATH.read_bytes()).hexdigest())
+    examples = ROOT_DIR / "examples"
+    examples.mkdir(exist_ok=True)
+    request = json.loads(ml_artifacts["test_df"][FEATURE_COLUMNS].head(1).to_json(orient="records"))[0]
+    (examples / "predict_request.json").write_text(json.dumps(request, indent=2), encoding="utf-8")
+    score = float(ml_artifacts["selected_pipeline"].predict_proba(pd.DataFrame([request]))[0, 1])
+    response = {"score": score, "prediction": int(score >= metadata["threshold"]),
+                **{key: metadata[key] for key in ["threshold", "horizon_days", "model_name", "model_version"]}}
+    (examples / "predict_response.json").write_text(json.dumps(response, ensure_ascii=False, indent=2), encoding="utf-8")
+    (PROCESSED_DIR / "ab_simulation.json").write_text(json.dumps(synthetic_demo(), indent=2), encoding="utf-8")
+    baseline_cutoff = (order_df.InvoiceDate.max() - pd.Timedelta(days=30)).to_period("M").to_timestamp()
+    baseline = historical_baseline(order_df, baseline_cutoff)
+    planning = {"historical_baseline": baseline, "sample_size": sample_size(baseline=baseline["repeat_rate"])}
+    (PROCESSED_DIR / "ab_planning.json").write_text(json.dumps(planning, ensure_ascii=False, indent=2), encoding="utf-8")
     ml_artifacts["feature_importance"].to_csv(PROCESSED_DIR / "feature_importance.csv", index=False)
 
     top_products = (

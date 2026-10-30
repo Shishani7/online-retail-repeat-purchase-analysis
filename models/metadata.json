@@ -1,0 +1,112 @@
+{
+  "model_name": "Random Forest",
+  "model_version": "e391880aed30",
+  "sha256": "e391880aed300489454b8fd1b3ef84c71c21121f488678af4109d026f2c8c4a7",
+  "horizon_days": 90,
+  "threshold": 0.5,
+  "feature_columns": [
+    "recency_days",
+    "frequency_orders",
+    "monetary_total",
+    "avg_order_value",
+    "max_order_value",
+    "avg_items_per_order",
+    "active_months",
+    "unique_products",
+    "total_units",
+    "avg_days_between_orders",
+    "customer_tenure_days",
+    "country"
+  ],
+  "feature_contract": "history-only-v1",
+  "source_csv_sha256": "2e1c0c9f058a6d6e0de9af045cd625a3c32867d0bf39478099078e722101a259",
+  "dependencies": {
+    "scikit-learn": "1.9.1",
+    "numpy": "2.3.5",
+    "pandas": "2.3.3",
+    "joblib": "1.6.0"
+  },
+  "evaluation": {
+    "horizon_days": 90,
+    "threshold": 0.5,
+    "selection_rule": "Highest validation ROC-AUC; test metrics never select the winner",
+    "selection_train": {
+      "rows": 1682,
+      "customers": 1682,
+      "snapshot_dates": [
+        "2011-03-01"
+      ],
+      "max_label_window_end": "2011-05-30T00:00:00",
+      "positive_rate": 0.5671819262782402
+    },
+    "validation": {
+      "rows": 2718,
+      "customers": 2718,
+      "snapshot_dates": [
+        "2011-06-01"
+      ],
+      "max_label_window_end": "2011-08-30T00:00:00",
+      "positive_rate": 0.493009565857248
+    },
+    "final_train": {
+      "rows": 8968,
+      "customers": 2718,
+      "snapshot_dates": [
+        "2011-03-01",
+        "2011-04-01",
+        "2011-05-01",
+        "2011-06-01"
+      ],
+      "max_label_window_end": "2011-08-30T00:00:00",
+      "positive_rate": 0.5311106155218555
+    },
+    "test": {
+      "rows": 3317,
+      "customers": 3317,
+      "snapshot_dates": [
+        "2011-09-01"
+      ],
+      "max_label_window_end": "2011-11-30T00:00:00",
+      "positive_rate": 0.5619535725052759
+    },
+    "selected_model": "Random Forest",
+    "validation_metrics": [
+      {
+        "Модель": "Random Forest",
+        "ROC-AUC": 0.754525269154951,
+        "F1": 0.6945848375451263,
+        "Precision": 0.6727272727272727,
+        "Recall": 0.7179104477611941
+      },
+      {
+        "Модель": "Логистическая регрессия",
+        "ROC-AUC": 0.7509547689708208,
+        "F1": 0.6727561556791104,
+        "Precision": 0.7190152801358234,
+        "Recall": 0.6320895522388059
+      }
+    ],
+    "test_metrics": [
+      {
+        "Модель": "Логистическая регрессия",
+        "ROC-AUC": 0.7352757651034266,
+        "F1": 0.670516717325228,
+        "Precision": 0.773492286115007,
+        "Recall": 0.5917381974248928
+      },
+      {
+        "Модель": "Random Forest",
+        "ROC-AUC": 0.7456108643062009,
+        "F1": 0.6982954545454545,
+        "Precision": 0.7421497584541062,
+        "Recall": 0.6593347639484979
+      }
+    ],
+    "limitations": [
+      "One validation cutoff and one held-out test cutoff in a short historical dataset.",
+      "The same known customers can occur in successive snapshots; rows are dependent.",
+      "Scores are not calibrated causal treatment effects or proof of campaign uplift."
+    ]
+  },
+  "warning": "Load only trusted repository artifacts. Scores have not been probability-calibrated."
+}

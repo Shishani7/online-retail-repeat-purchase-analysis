@@ -1,0 +1,14 @@
+{
+  "recency_days": 225,
+  "frequency_orders": 1,
+  "monetary_total": 77183.6,
+  "avg_order_value": 77183.6,
+  "max_order_value": 77183.6,
+  "avg_items_per_order": 74215.0,
+  "active_months": 1,
+  "unique_products": 1,
+  "total_units": 74215,
+  "avg_days_between_orders": null,
+  "customer_tenure_days": 225,
+  "country": "United Kingdom"
+}

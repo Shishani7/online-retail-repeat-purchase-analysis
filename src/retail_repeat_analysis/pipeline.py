@@ -2,13 +2,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from sklearn.compose import ColumnTransformer
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.impute import SimpleImputer
-from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import f1_score, precision_score, recall_score, roc_auc_score, roc_curve
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import OneHotEncoder, StandardScaler
+
+plt.switch_backend("Agg")
 
 
 def configure_plotting():
@@ -117,7 +112,7 @@ def calculate_overview_metrics(clean_df, order_df):
 
     metrics = [
         {"Метрика": "Период данных", "Значение": f"{clean_df['InvoiceDate'].min():%d.%m.%Y} - {clean_df['InvoiceDate'].max():%d.%m.%Y}"},
-        {"Метрика": "Строк после очистки", "Значение": int(len(clean_df))},
+        {"Метрика": "Строк после очистки", "Значение": len(clean_df)},
         {"Метрика": "Уникальные клиенты", "Значение": int(clean_df["CustomerID"].nunique())},
         {"Метрика": "Уникальные заказы", "Значение": int(order_df["InvoiceNo"].nunique())},
         {"Метрика": "Общая выручка", "Значение": round(float(clean_df["Revenue"].sum()), 2)},
@@ -213,6 +208,11 @@ def plot_customer_concentration(concentration_df, output_path=None):
 
 def _quintile_score(series, higher_is_better=True):
     ranked = series.rank(method="first", ascending=True)
+    if len(series) == 1:
+        return pd.Series(3, index=series.index, dtype=int)
+    if len(series) < 5:
+        score = (1 + ((ranked - 1) / (len(series) - 1) * 4).round()).astype(int)
+        return score if higher_is_better else 6 - score
     labels = [1, 2, 3, 4, 5] if higher_is_better else [5, 4, 3, 2, 1]
     return pd.qcut(ranked, 5, labels=labels).astype(int)
 
@@ -238,8 +238,8 @@ def _segment_from_scores(row):
     return "Потерянные"
 
 
-def compute_rfm_table(clean_df):
-    analysis_date = clean_df["InvoiceDate"].max() + pd.Timedelta(days=1)
+def compute_rfm_table(clean_df, analysis_date=None):
+    analysis_date = pd.Timestamp(analysis_date) if analysis_date is not None else clean_df["InvoiceDate"].max() + pd.Timedelta(days=1)
     rfm = clean_df.groupby("CustomerID").agg(
         Recency=("InvoiceDate", lambda s: (analysis_date - s.max()).days),
         Frequency=("InvoiceNo", "nunique"),
@@ -283,19 +283,8 @@ def plot_rfm_segments(rfm_summary, output_path=None):
 
 
 def build_cohort_retention(clean_df):
-    cohort_df = clean_df[["CustomerID", "InvoiceDate"]].copy()
-    cohort_df["InvoiceMonth"] = cohort_df["InvoiceDate"].dt.to_period("M")
-    cohort_df["CohortMonth"] = cohort_df.groupby("CustomerID")["InvoiceMonth"].transform("min")
-    cohort_df["CohortIndex"] = (cohort_df["InvoiceMonth"] - cohort_df["CohortMonth"]).apply(lambda p: p.n)
-
-    cohort_counts = cohort_df.groupby(["CohortMonth", "CohortIndex"])["CustomerID"].nunique().unstack()
-    max_index = int((cohort_df["InvoiceMonth"].max() - cohort_df["CohortMonth"].min()).n)
-    cohort_counts = cohort_counts.reindex(columns=range(max_index + 1))
-    retention = cohort_counts.div(cohort_counts[0], axis=0)
-
-    cohort_counts.index = cohort_counts.index.astype(str)
-    retention.index = retention.index.astype(str)
-    return cohort_counts, retention
+    from .analytics import cohort_retention
+    return cohort_retention(clean_df)
 
 
 def plot_cohort_heatmap(retention, output_path=None):
@@ -317,172 +306,14 @@ def plot_cohort_heatmap(retention, output_path=None):
     return fig
 
 
-def _generate_cutoff_dates(clean_df, min_history_months=6, horizon_days=90):
-    first_month = clean_df["InvoiceDate"].min().to_period("M").to_timestamp()
-    last_allowed_cutoff = clean_df["InvoiceDate"].max().normalize() - pd.Timedelta(days=horizon_days)
-    start_cutoff = first_month + pd.DateOffset(months=min_history_months)
-    return pd.date_range(start=start_cutoff, end=last_allowed_cutoff, freq="MS")
-
-
 def build_ml_snapshot_dataset(clean_df, order_df, horizon_days=90):
-    cutoff_dates = _generate_cutoff_dates(clean_df, min_history_months=6, horizon_days=horizon_days)
-    rows = []
-
-    for cutoff in cutoff_dates:
-        history_tx = clean_df[clean_df["InvoiceDate"] < cutoff].copy()
-        history_orders = order_df[order_df["InvoiceDate"] < cutoff].copy()
-        future_orders = order_df[
-            (order_df["InvoiceDate"] >= cutoff) &
-            (order_df["InvoiceDate"] < cutoff + pd.Timedelta(days=horizon_days))
-        ].copy()
-
-        if history_orders.empty:
-            continue
-
-        order_features = history_orders.groupby("CustomerID", as_index=False).agg(
-            recency_days=("InvoiceDate", lambda s: (cutoff - s.max()).days),
-            frequency_orders=("InvoiceNo", "nunique"),
-            monetary_total=("OrderRevenue", "sum"),
-            avg_order_value=("OrderRevenue", "mean"),
-            max_order_value=("OrderRevenue", "max"),
-            avg_items_per_order=("Items", "mean"),
-            active_months=("InvoiceDate", lambda s: s.dt.to_period("M").nunique()),
-            first_purchase_date=("InvoiceDate", "min"),
-            last_purchase_date=("InvoiceDate", "max"),
-            country=("Country", lambda s: s.mode().iat[0] if not s.mode().empty else s.iloc[0]),
-        )
-
-        tx_features = history_tx.groupby("CustomerID", as_index=False).agg(
-            unique_products=("StockCode", "nunique"),
-            total_units=("Quantity", "sum"),
-        )
-
-        # среднее время между заказами для каждого клиента
-        order_dates = history_orders.sort_values(["CustomerID", "InvoiceDate"]).groupby("CustomerID")["InvoiceDate"].apply(list)
-        gap_features = []
-        for customer_id, dates in order_dates.items():
-            if len(dates) > 1:
-                days_diff = np.diff(pd.to_datetime(dates).values.astype("datetime64[D]")).astype(int)
-                gap_features.append({"CustomerID": customer_id, "avg_days_between_orders": float(np.mean(days_diff))})
-            else:
-                gap_features.append({"CustomerID": customer_id, "avg_days_between_orders": np.nan})
-        gap_df = pd.DataFrame(gap_features)
-
-        snapshot = order_features.merge(tx_features, on="CustomerID", how="left").merge(gap_df, on="CustomerID", how="left")
-        snapshot["customer_tenure_days"] = (cutoff - snapshot["first_purchase_date"]).dt.days
-        snapshot["target_repeat_purchase"] = snapshot["CustomerID"].isin(future_orders["CustomerID"]).astype(int)
-        snapshot["snapshot_date"] = cutoff
-        rows.append(snapshot)
-
-    snapshot_df = pd.concat(rows, ignore_index=True)
-    snapshot_df["snapshot_date"] = pd.to_datetime(snapshot_df["snapshot_date"])
-    return snapshot_df
+    from .modeling import build_snapshot_dataset
+    return build_snapshot_dataset(clean_df, order_df, horizon_days=horizon_days)
 
 
 def build_ml_artifacts(clean_df, order_df):
-    snapshot_df = build_ml_snapshot_dataset(clean_df, order_df, horizon_days=90)
-    last_snapshot = snapshot_df["snapshot_date"].max()
-
-    train_df = snapshot_df[snapshot_df["snapshot_date"] < last_snapshot].copy()
-    test_df = snapshot_df[snapshot_df["snapshot_date"] == last_snapshot].copy()
-
-    numeric_features = [
-        "recency_days",
-        "frequency_orders",
-        "monetary_total",
-        "avg_order_value",
-        "max_order_value",
-        "avg_items_per_order",
-        "active_months",
-        "unique_products",
-        "total_units",
-        "avg_days_between_orders",
-        "customer_tenure_days",
-    ]
-    categorical_features = ["country"]
-    feature_columns = numeric_features + categorical_features
-
-    preprocessing = ColumnTransformer([
-        ("num", Pipeline([
-            ("imputer", SimpleImputer(strategy="median")),
-            ("scaler", StandardScaler()),
-        ]), numeric_features),
-        ("cat", Pipeline([
-            ("imputer", SimpleImputer(strategy="most_frequent")),
-            ("encoder", OneHotEncoder(handle_unknown="ignore")),
-        ]), categorical_features),
-    ])
-
-    models = {
-        "Логистическая регрессия": Pipeline([
-            ("preprocess", preprocessing),
-            ("model", LogisticRegression(max_iter=2000, class_weight="balanced")),
-        ]),
-        "Random Forest": Pipeline([
-            ("preprocess", preprocessing),
-            ("model", RandomForestClassifier(
-                n_estimators=500,
-                max_depth=10,
-                min_samples_leaf=5,
-                random_state=42,
-                class_weight="balanced_subsample",
-                n_jobs=-1,
-            )),
-        ]),
-    }
-
-    metrics_rows = []
-    roc_curves = {}
-    trained_models = {}
-
-    X_train = train_df[feature_columns]
-    y_train = train_df["target_repeat_purchase"]
-    X_test = test_df[feature_columns]
-    y_test = test_df["target_repeat_purchase"]
-
-    for model_name, model in models.items():
-        model.fit(X_train, y_train)
-        proba = model.predict_proba(X_test)[:, 1]
-        preds = (proba >= 0.5).astype(int)
-        fpr, tpr, _ = roc_curve(y_test, proba)
-        auc = roc_auc_score(y_test, proba)
-
-        metrics_rows.append({
-            "Модель": model_name,
-            "ROC-AUC": round(float(auc), 4),
-            "F1": round(float(f1_score(y_test, preds)), 4),
-            "Precision": round(float(precision_score(y_test, preds)), 4),
-            "Recall": round(float(recall_score(y_test, preds)), 4),
-        })
-        roc_curves[model_name] = (fpr, tpr, float(auc))
-        trained_models[model_name] = model
-
-    metrics_df = pd.DataFrame(metrics_rows).sort_values("ROC-AUC", ascending=False).reset_index(drop=True)
-    best_model_name = metrics_df.iloc[0]["Модель"]
-    best_model = trained_models[best_model_name]
-
-    feature_names = best_model.named_steps["preprocess"].get_feature_names_out()
-    model_step = best_model.named_steps["model"]
-    if hasattr(model_step, "feature_importances_"):
-        importances = model_step.feature_importances_
-    else:
-        importances = np.abs(np.ravel(model_step.coef_))
-
-    feature_importance = (
-        pd.DataFrame({"Признак": feature_names, "Важность": importances})
-        .sort_values("Важность", ascending=False)
-        .reset_index(drop=True)
-    )
-
-    return {
-        "snapshot_df": snapshot_df,
-        "train_df": train_df,
-        "test_df": test_df,
-        "metrics_df": metrics_df,
-        "roc_curves": roc_curves,
-        "feature_importance": feature_importance,
-        "best_model_name": best_model_name,
-    }
+    from .modeling import build_ml_artifacts as build_validated
+    return build_validated(clean_df, order_df)
 
 
 def plot_model_roc_curves(roc_curves, output_path=None):
