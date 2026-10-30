@@ -34,4 +34,3 @@ def test_historical_baseline_requires_complete_followup():
     orders = pd.DataFrame({"InvoiceDate": pd.to_datetime(["2011-11-15"])})
     with pytest.raises(ValueError, match="fully observed"):
         historical_baseline(orders, "2011-11-01")
-

@@ -49,4 +49,3 @@ def test_small_rfm_population_and_explicit_cutoff():
     assert rfm.iloc[0].Monetary == 10
     assert rfm.iloc[0].Recency == 30
     assert summary["Клиенты"].sum() == 1
-

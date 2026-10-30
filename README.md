@@ -137,4 +137,3 @@ uv run jupyter nbconvert --to notebook --execute --inplace notebooks/online_reta
 Chen, D. (2015). **Online Retail**. UCI Machine Learning Repository. [DOI: 10.24432/C5BW33](https://doi.org/10.24432/C5BW33). [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Исходные строки преобразованы и агрегированы; таблицы и изображения являются производными материалами.
 
 Период: 1 декабря 2010 - 9 декабря 2011. Декабрь 2011 неполный; в выборке есть оптовые покупатели.
-

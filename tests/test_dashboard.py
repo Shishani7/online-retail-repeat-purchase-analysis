@@ -33,4 +33,3 @@ def test_experiment_controls_and_synthetic_demo():
     app.button[0].click().run()
     assert not app.exception
     assert len(app.info) >= 1
-

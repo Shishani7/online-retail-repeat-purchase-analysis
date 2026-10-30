@@ -28,4 +28,3 @@ pythonpath = ["src"]
 target-version = "py311"
 line-length = 110
 extend-exclude = ["notebooks"]
-

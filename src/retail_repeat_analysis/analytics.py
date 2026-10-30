@@ -50,4 +50,3 @@ def cohort_retention(frame, observation_end=None):
     counts.index = counts.index.astype(str)
     retention.index = retention.index.astype(str)
     return counts, retention
-

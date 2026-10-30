@@ -91,4 +91,3 @@ def test_detects_corrupted_model(tmp_path):
     (tmp_path / "repeat_purchase.joblib").write_bytes(b"not a model")
     with pytest.raises(ValueError, match="checksum"):
         load_bundle(tmp_path)
-

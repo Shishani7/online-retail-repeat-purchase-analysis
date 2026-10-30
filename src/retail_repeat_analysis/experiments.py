@@ -54,4 +54,3 @@ def synthetic_demo(baseline=0.20, mde=0.02, alpha=0.05, power=0.80, seed=42, rep
             "assumptions": plan, "seed": seed, "repetitions": repetitions,
             "simulated_rejection_rate": float((p_values < alpha).mean()),
             "note": "All outcomes are generated from assumed Bernoulli rates, not observed CRM effects."}
-

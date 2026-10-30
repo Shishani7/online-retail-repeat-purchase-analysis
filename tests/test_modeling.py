@@ -61,4 +61,3 @@ def test_refuses_insufficient_history_for_model_selection():
     data = pd.DataFrame({"snapshot_date": ["2011-08-01", "2011-09-01"], "target_repeat_purchase": [0, 1]})
     with pytest.raises(ValueError, match="validation"):
         chronological_split(data)
-
